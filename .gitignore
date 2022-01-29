@@ -1,6 +1,9 @@
 node_modules/
 artifacts/
+build/
+*migrations*/
 cache/
 scripts/
 *.json
 *.js
+*.txt

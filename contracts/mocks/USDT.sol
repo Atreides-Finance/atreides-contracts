@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.7.5;
 
 contract LibNote {
@@ -198,7 +199,7 @@ contract USDT is LibNote {
                 add(wad, usdtMintedToday[msg.sender]) <= dailyUSDTLimit ||
                     (sub(block.number, lastMintRestart[msg.sender]) >= 6500 &&
                         wad <= dailyUSDTLimit),
-                "Over usdtly USDT Limit"
+                "Over daily USDT Limit"
             );
             if (sub(block.number, lastMintRestart[msg.sender]) >= 6500) {
                 usdtMintedToday[msg.sender] = wad;
