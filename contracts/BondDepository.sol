@@ -853,7 +853,7 @@ interface ITreasury {
         uint256 _profit
     ) external returns (bool);
 
-    function valueOf(address _token, uint256 _amount)
+    function valueOfToken(address _token, uint256 _amount)
         external
         view
         returns (uint256 value_);
@@ -874,10 +874,6 @@ interface IStaking {
 
 interface IStakingHelper {
     function stake(uint256 _amount, address _recipient) external;
-}
-
-interface IBackingCalculator {
-    function treasuryBacking() external view returns (uint256 _treasuryBacking);
 }
 
 contract BondDepository is Ownable {
@@ -935,9 +931,6 @@ contract BondDepository is Ownable {
     uint256 public totalPrinciple; // total principle bonded through this depository
 
     string internal name_; //name of this bond
-    IBackingCalculator public backingCalculator;
-    uint8 public principleDecimals; //principle decimals or pair markdown decimals
-    uint8 public premium; //percent , 20%=20
 
     /* ======== STRUCTS ======== */
 
@@ -974,29 +967,22 @@ contract BondDepository is Ownable {
         string memory _name,
         address _SPICE,
         address _principle,
-        uint8 _principleDecimals,
         address _treasury,
         address _DAO,
-        address _backingCalculator,
         address _bondCalculator
     ) {
         require(_SPICE != address(0));
         SPICE = _SPICE;
         require(_principle != address(0));
         principle = _principle;
-        require(_principleDecimals != 0);
-        principleDecimals = _principleDecimals;
         require(_treasury != address(0));
         treasury = _treasury;
         require(_DAO != address(0));
         DAO = _DAO;
-        require(address(0) != _backingCalculator);
-        backingCalculator = IBackingCalculator(_backingCalculator);
         // bondCalculator should be address(0) if not LP bond
         bondCalculator = _bondCalculator;
         isLiquidityBond = (_bondCalculator != address(0));
         name_ = _name;
-        premium = 20;
     }
 
     /**
@@ -1135,7 +1121,7 @@ contract BondDepository is Ownable {
             "Slippage limit: more than max price"
         ); // slippage protection
 
-        uint256 value = ITreasury(treasury).valueOf(principle, _amount);
+        uint256 value = ITreasury(treasury).valueOfToken(principle, _amount);
         uint256 payout = payoutFor(value); // payout to bonder is computed
 
         require(payout >= 10000000, "Bond too small"); // must be > 0.01 SPICE ( underflow protection )
@@ -1291,22 +1277,6 @@ contract BondDepository is Ownable {
         lastDecay = block.number;
     }
 
-    function setBackingCalculator(address _backingCalculator)
-        external
-        onlyPolicy
-    {
-        require(address(0) != _backingCalculator);
-        backingCalculator = IBackingCalculator(_backingCalculator);
-    }
-
-    function setPrincipleDecimals(uint8 _principleDecimals)
-        external
-        onlyPolicy
-    {
-        require(_principleDecimals != 0);
-        principleDecimals = _principleDecimals;
-    }
-
     /* ======== VIEW FUNCTIONS ======== */
 
     /**
@@ -1343,24 +1313,6 @@ contract BondDepository is Ownable {
         if (price_ < terms.minimumPrice) {
             price_ = terms.minimumPrice;
         }
-        uint256 bph = backingCalculator.treasuryBacking(); //1e4
-        uint256 nativeBph = toNativePrice(bph); //1e4
-        uint256 priceFloor = nativeBph.mul(uint256(100).add(premium)).div(100);
-        if (price_ < priceFloor) {
-            price_ = priceFloor;
-        }
-    }
-
-    function toNativePrice(uint256 _bph)
-        public
-        view
-        returns (uint256 _nativeBph)
-    {
-        if (isLiquidityBond)
-            _nativeBph = _bph.mul(10**principleDecimals).div(
-                IBondCalculator(bondCalculator).markdown(principle)
-            );
-        else _nativeBph = _bph;
     }
 
     /**
@@ -1379,16 +1331,6 @@ contract BondDepository is Ownable {
         } else if (terms.minimumPrice != 0) {
             terms.minimumPrice = 0;
         }
-        uint256 bph = backingCalculator.treasuryBacking(); //1e4
-        uint256 nativeBph = toNativePrice(bph); //1e4
-        uint256 priceFloor = nativeBph.mul(uint256(100).add(premium)).div(100);
-        if (price_ < priceFloor) {
-            price_ = priceFloor;
-        }
-    }
-
-    function setPremium(uint8 _premium) external onlyPolicy {
-        premium = _premium;
     }
 
     /**

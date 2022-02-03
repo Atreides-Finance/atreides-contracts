@@ -101,7 +101,7 @@ contract USDT is LibNote {
     string public constant name = "USDT Stablecoin";
     string public constant symbol = "USDT";
     string public constant version = "1";
-    uint8 public constant decimals = 18;
+    uint8 public constant decimals = 6;
     uint256 public totalSupply;
     uint256 public dailyUSDTLimit;
 

@@ -403,7 +403,7 @@ contract Treasury is Ownable {
             require(isLiquidityDepositor[msg.sender], "Not approved");
         }
 
-        uint256 value = valueOf(_token, _amount);
+        uint256 value = valueOfToken(_token, _amount);
         // mint SPICE needed and store amount of rewards for distribution
         send_ = value.sub(_profit);
         IERC20Mintable(SPICE).mint(msg.sender, send_);
@@ -423,7 +423,7 @@ contract Treasury is Ownable {
         require(isReserveToken[_token], "Not accepted"); // Only reserves can be used for redemptions
         require(isReserveSpender[msg.sender] == true, "Not approved");
 
-        uint256 value = valueOf(_token, _amount);
+        uint256 value = valueOfToken(_token, _amount);
         ISPICEERC20(SPICE).burnFrom(msg.sender, value);
 
         totalReserves = totalReserves.sub(value);
@@ -443,7 +443,7 @@ contract Treasury is Ownable {
         require(isDebtor[msg.sender], "Not approved");
         require(isReserveToken[_token], "Not accepted");
 
-        uint256 value = valueOf(_token, _amount);
+        uint256 value = valueOfToken(_token, _amount);
 
         uint256 maximumDebt = IERC20(sSPICE).balanceOf(msg.sender); // Can only borrow against sSPICE held
         uint256 availableDebt = maximumDebt.sub(debtorBalance[msg.sender]);
@@ -471,7 +471,7 @@ contract Treasury is Ownable {
 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
-        uint256 value = valueOf(_token, _amount);
+        uint256 value = valueOfToken(_token, _amount);
         debtorBalance[msg.sender] = debtorBalance[msg.sender].sub(value);
         totalDebt = totalDebt.sub(value);
 
@@ -508,7 +508,7 @@ contract Treasury is Ownable {
             require(isReserveManager[msg.sender], "Not approved");
         }
 
-        uint256 value = valueOf(_token, _amount);
+        uint256 value = valueOfToken(_token, _amount);
         require(value <= excessReserves(), "Insufficient reserves");
 
         totalReserves = totalReserves.sub(value);
@@ -547,7 +547,7 @@ contract Treasury is Ownable {
         uint256 reserves;
         for (uint256 i = 0; i < reserveTokens.length; i++) {
             reserves = reserves.add(
-                valueOf(
+                valueOfToken(
                     reserveTokens[i],
                     IERC20(reserveTokens[i]).balanceOf(address(this))
                 )
@@ -555,7 +555,7 @@ contract Treasury is Ownable {
         }
         for (uint256 i = 0; i < liquidityTokens.length; i++) {
             reserves = reserves.add(
-                valueOf(
+                valueOfToken(
                     liquidityTokens[i],
                     IERC20(liquidityTokens[i]).balanceOf(address(this))
                 )
@@ -572,7 +572,7 @@ contract Treasury is Ownable {
         @param _amount uint
         @return value_ uint
      */
-    function valueOf(address _token, uint256 _amount)
+    function valueOfToken(address _token, uint256 _amount)
         public
         view
         returns (uint256 value_)
